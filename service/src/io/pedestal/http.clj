@@ -321,6 +321,9 @@
     (when (= type :immutant)
       ;; Load in container optimizations (NIO)
       (require 'io.pedestal.http.immutant.container))
+    (when (= type :tomcat)
+      ;; Load in container optimizations (NIO)
+      (require 'io.pedestal.http.tomcat.container))
     (merge service-map (server-map->service-map server-map))))
 
 (defn create-server
