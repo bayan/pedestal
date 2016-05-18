@@ -18,12 +18,29 @@
             [io.pedestal.interceptor.helpers :refer [defhandler handler]]
             [io.pedestal.http.servlet :as servlet]
             [io.pedestal.http.impl.servlet-interceptor :as servlet-interceptor])
-  (:import (java.io File)))
+  (:import (java.io File)
+           (java.nio ByteBuffer)
+           (java.nio.channels Pipe)))
 
 (defhandler hello-world [request]
   {:status  200
    :headers {"Content-Type" "text/plain"}
    :body    "Hello World"})
+
+(defhandler hello-bytebuffer [request]
+  {:status  200
+   :headers {"Content-Type" "text/plain"}
+   :body    (ByteBuffer/wrap (.getBytes "Hello World" "UTF-8"))})
+
+(defhandler hello-bytechannel [request]
+  (let [p (Pipe/open)
+        b (ByteBuffer/wrap (.getBytes "Hello World" "UTF-8"))
+        sink (.sink p)]
+    (.write sink b)
+    (.close sink)
+    {:status  200
+     :headers {"Content-Type" "text/plain"}
+     :body    (.source p)}))
 
 (defn content-type-handler [content-type]
   (handler
@@ -119,5 +136,15 @@
       (= "tomcat" (.getAttribute connector "keyAlias"))
       (= 60 (.getAttribute connector "sessionTimeout"))))
 
-  )
+  (testing "supports NIO Async via ByteBuffers"
+    (with-server hello-bytebuffer {:port 14350}
+      (let [response (http/get "http://localhost:14350")]
+        (is (= (:status response) 200))
+        (is (= (:body response) "Hello World")))))
+
+  (testing "supports NIO Async via ReadableByteChannel"
+    (with-server hello-bytechannel {:port 14351}
+      (let [response (http/get "http://localhost:14351")]
+        (is (= (:status response) 200))
+        (is (= (:body response) "Hello World"))))))
 
