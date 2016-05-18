@@ -11,7 +11,8 @@
 ; You must not remove this notice, or any other, from this software.
 
 (ns io.pedestal.http.tomcat
-  (:require [clojure.java.io :as io])
+  (:require [clojure.java.io :as io]
+            [io.pedestal.http.tomcat.container])
   (:import (org.apache.catalina.startup Tomcat)
            (org.apache.catalina.connector Connector)
            (javax.servlet Servlet)))
